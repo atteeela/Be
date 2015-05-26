@@ -46,28 +46,27 @@ function Expect(value: any, ...constraint: any[])
 		else
 		{
 			let signature = Expect.util.parseSignature(constraint);
-			if (signature.parseError)
+			if (Expect.util.hasErrors)
 			{
-				if (Expect.util.report(signature.parseError, signature))
+				if (Expect.util.flush())
 					debugger;
 				
 				return;
 			}
 			
 			/* Bad input checks */
-			let checkLengthMessage = Expect.util.checkLength(signature, args);
-			if (checkLengthMessage)
+			if (Expect.util.checkLength(signature, args))
 			{
-				if (Expect.util.report(checkLengthMessage, args))
+				if (Expect.util.flush())
 					debugger;
 				
 				return;
 			}
 			
-			let checkArgumentsMessage = Expect.util.checkArguments(signature, args);
-			if (checkArgumentsMessage)
+			Expect.util.checkArguments(signature, args);
+			if (Expect.util.hasErrors)
 			{
-				if (Expect.util.report(checkArgumentsMessage, args))
+				if (Expect.util.flush())
 					debugger;
 				
 				return;
@@ -452,15 +451,15 @@ module Expect
 		for (let i = -1; ++i < overloads.length;)
 		{
 			let signature = util.parseSignature(overloads[i]);
-			signatures.push(signature);
-			
-			if (signature.parseError)
+			if (util.hasErrors)
 			{
-				if (Expect.util.report(signature.parseError, signature))
+				if (util.flush())
 					debugger;
 				
 				return;
 			}
+			
+			signatures.push(signature);
 			
 			if (!util.checkLength(signature, args))
 				if (!util.checkArguments(signature, args))
@@ -504,27 +503,42 @@ module Expect.util
 			"Invalid signature: " + message :
 			"Failed expectation: " + message;
 		
-		let error = new ExpectationError(message);
-		
-		if (hasValue)
-			error.value = value;
-		
-		let handlerError: Error = null;
-		
-		if (Expect.handler instanceof Function)
+		if (reportDeferred)
 		{
-			try
+			reportMessages.push(message);
+			
+			if (hasValue)
 			{
-				Expect.handler(error);
+				reportValue = value;
+				reportValueSet = true;
 			}
-			catch (e)
-			{
-				handlerError = e;
-			}
+			
+			return false;
 		}
-		
-		if (!Expect.useExceptions || typeof console !== "undefined")
+		else
 		{
+			let error = new ExpectationError(message);
+			
+			if (hasValue)
+				error.value = value;
+			
+			let handlerError: Error = null;
+			
+			if (Expect.handler instanceof Function)
+			{
+				try
+				{
+					Expect.handler(error);
+				}
+				catch (e)
+				{
+					handlerError = e;
+				}
+			}
+			
+			if (Expect.useExceptions || typeof console !== "undefined")
+				throw error;
+			
 			let output = msg => 
 				typeof console.error === "function" ?
 					console.error(msg) :
@@ -537,11 +551,44 @@ module Expect.util
 				console.log("%cYour error handler threw an error.", "color: red, font-size: 150%");
 				output(handlerError);
 			}
+			
+			return Expect.useDebuggers;
 		}
-		else throw error;
-		
-		return Expect.useDebuggers;
 	}
+	
+	/** Flushes out all deferred errors. *///
+	export function flush()
+	{
+		let messages = reportMessages.join("\r\n");
+		reportMessages.length = 0;
+		
+		let value = reportValue;
+		reportValue = null;
+		
+		let valueSet = reportValueSet;
+		reportValueSet = false;
+		
+		return valueSet ? report(messages, value) : report(messages);
+	}
+	
+	/** Executes the specified function, returning an errors that are collected (without breaking on them immediately). *///
+	export function defer(fn: () => void)
+	{
+		reportDeferred = true;
+		fn();
+		reportDeferred = false;
+	}
+	
+	/** *///
+	export function hasErrors()
+	{
+		return !!reportMessages.length;
+	}
+	
+	var reportMessages: string[] = [];
+	var reportValue = null;
+	var reportValueSet = false;
+	var reportDeferred = false;
 	
 	/** Returns whether the value is one of the obvious errors (NaN, null unless allowed, undefined unless allowed). *///
 	export function checkObvious(value: any, constraint: any[])
@@ -629,29 +676,35 @@ module Expect.util
 		else if (signature.hasRest)
 			minLength--;
 		
-		if (args.length < minLength)
-			return `The signature expects${minLength < signature.parameters.length ? " at least" : ""} ${minLength} parameter${minLength > 1 ? "s" : ""} (${stringifySignature(signature)}), but ${args.length} were specified.`;
-		
-		if (args.length > signature.parameters.length && !signature.hasRest)
-			return `The signature expects${signature.optionalPoint > -1 ? " at most" : ""} ${signature.parameters.length} parameter${signature.parameters.length > 1 ? "s" : ""} (${stringifySignature(signature)}), but ${args.length} were specified.`;
-		
-		return "";
+		defer(() =>
+		{
+			if (args.length < minLength)
+				report(`The signature expects${minLength < signature.parameters.length ? " at least" : ""} ${minLength} parameter${minLength > 1 ? "s" : ""} (${stringifySignature(signature)}), but ${args.length} were specified.`, args);
+			
+			else if (args.length > signature.parameters.length && !signature.hasRest)
+				report(`The signature expects${signature.optionalPoint > -1 ? " at most" : ""} ${signature.parameters.length} parameter${signature.parameters.length > 1 ? "s" : ""} (${stringifySignature(signature)}), but ${args.length} were specified.`, args);
+		});
 	}
 	
 	/** Returns the message to display if there is a type error with one or more of the arguments. *///
 	export function checkArguments(signature: Signature, args: IArguments)
 	{
-		for (let i = -1; ++i < args.length;)
+		defer(() =>
 		{
-			let arg = args[i];
-			let paramIdx = i >= signature.parameters.length ? signature.parameters.length - 1 : i;
-			let param = signature.parameters[paramIdx];
-			
-			if (!util.checkConstraint(arg, param.types))
-				return `Argument ${i + 1} is ${stringifyValue(arg)}, but it's expected to comply with the constraint: ${stringifyParameter(param)}.`;
-		}
-		
-		return "";
+			for (let i = -1; ++i < args.length;)
+			{
+				let arg = args[i];
+				let paramIdx = i >= signature.parameters.length ? signature.parameters.length - 1 : i;
+				let param = signature.parameters[paramIdx];
+				
+				for (let key in param)
+					if (param[key] === true && (key in Expect))
+						Expect[key](arg);
+				
+				if (!util.checkConstraint(arg, param.types))
+					report(`Argument ${i + 1} is ${stringifyValue(arg)}, but it's expected to comply with the constraint: ${stringifyParameter(param)}.`, args);
+			}
+		});
 	}
 	
 	/** Creates a signature AST-thing from the input array. *///
@@ -680,43 +733,46 @@ module Expect.util
 			return constraint === expectMarker;
 		}
 		
-		for (let i = -1; ++i < rawSignature.length;)
+		defer(() =>
 		{
-			let constraint: any[] = rawSignature[i] instanceof Array ? rawSignature[i] : [rawSignature[i]];
-			
-			if (extract(constraint, Expect.rest))
+			for (let i = -1; ++i < rawSignature.length;)
 			{
-				if (i !== rawSignature.length - 1)
+				let constraint: any[] = rawSignature[i] instanceof Array ? rawSignature[i] : [rawSignature[i]];
+				
+				if (extract(constraint, Expect.rest))
 				{
-					signature.parseError = "Only the last parameter be a rest parameter.";
-					break;
+					if (i !== rawSignature.length - 1)
+					{
+						report("Only the last parameter be a rest parameter.", rawSignature);
+						break;
+					}
+					
+					if (extract(constraint, Expect.optional))
+					{
+						report("Rest parameters can not be optional.", rawSignature);
+						break;
+					}
+					
+					signature.hasRest = true;
 				}
 				
 				if (extract(constraint, Expect.optional))
 				{
-					signature.parseError = "Rest parameters can not be optional.";
+					if (signature.optionalPoint < 0)
+					{
+						let op = signature.optionalPoint;
+						signature.optionalPoint = i;
+					}
+				}
+				else if (signature.optionalPoint > -1 && !signature.hasRest)
+				{
+					report("Required parameters must go before optional and rest parameters.", rawSignature);
 					break;
 				}
 				
-				signature.hasRest = true;
+				signature.parameters.push(parseParameter(constraint));
 			}
-			
-			if (extract(constraint, Expect.optional))
-			{
-				if (signature.optionalPoint < 0)
-				{
-					let op = signature.optionalPoint;
-					signature.optionalPoint = i;
-				}
-			}
-			else if (signature.optionalPoint > -1 && !signature.hasRest)
-			{
-				signature.parseError = "Required parameters must go before optional and rest parameters.";
-				break;
-			}
-			
-			signature.parameters.push(parseParameter(constraint));
-		}
+		});
 		
 		return signature;
 	}
@@ -923,8 +979,6 @@ module Expect.util
 		parameters: Parameter[] = [];
 		optionalPoint = -1;
 		hasRest = false;
-		
-		parseError = "";
 	}
 	
 	
@@ -936,7 +990,5 @@ module Expect.util
 		positive = false;
 		enumerated = false;
 		email = false;
-		
-		parseError = "";
 	}
 }
