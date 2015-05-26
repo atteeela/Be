@@ -1,0 +1,17 @@
+{
+	"version": "1.5",
+	"compilerOptions": {
+		"target": "es5",
+		"module": "commonjs",
+		"declaration": false,
+		"noImplicitAny": false,
+		"removeComments": false,
+		"noLib": false,
+		"out": "Expects.js",
+		"sourceMap": true
+	},
+	"files": [
+		"Expects.ts",
+		"Expects.test.ts"
+	]
+}
