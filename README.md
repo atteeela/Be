@@ -41,7 +41,7 @@ A difference from other libraries in that, by default, it uses `debugger;` state
 
 #Tutorial
 
-If you expect `stuff` to loosely equal true (i.e. not null, undefined, NaN, false, 0, or ''):
+If you expect `stuff` to loosely equal true (i.e. not null, undefined, NaN, false, 0, or ""):
 ```javascript
 var stuff = getStuff();
 Be(stuff);
@@ -114,7 +114,7 @@ Be.object(myObject, String, Number, Boolean); // Passes
 
 ##Value checking functions
 
-`Be.not(value);` - Expectation that value is null, undefined, NaN, false, 0, or ''.
+`Be.not(value);` - Expectation that value is null, undefined, NaN, false, 0, or empty string.
 
 `Be.notUndefined(value);` - Expectation that value is not undefined.
 
@@ -240,7 +240,7 @@ In short, `Be.overloads(arguments)` works like `Be(arguments)`, except that it t
 
 ##Failing semantically
 
-Use `Be.never()` to mark points where code execution should never reach, for example:
+Use `Be.broken()` to mark points where code execution should never reach, for example:
 ```javascript
 function handleState1or2()
 {
@@ -251,9 +251,11 @@ function handleState1or2()
 		console.log("We're in state 2.");
 	
 	// wtf?
-	else Be.never();
+	else Be.broken();
 }
 ```
+
+Use `Be.helpful("message")` when something goes wrong and you want to report an error message.
 
 Use `Be.notImplemented()` for functions that haven't been implemented yet.
 
