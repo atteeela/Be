@@ -79,11 +79,11 @@ var Expect;
     Expect.ExpectationError = ExpectationError;
     ExpectationError.prototype = new Error;
     /** Expectation that the execution point will never reach the current location. */ //
-    function fail() {
+    function never() {
         if (Expect.util.report("An invalid location has been reached in the program."))
             debugger;
     }
-    Expect.fail = fail;
+    Expect.never = never;
     /** Expectation that the function is never called directly, and the only implementations exist in derived types. */ //
     function abstract() {
         if (Expect.util.report("This function must be overridden by an inheritor."))
@@ -102,21 +102,21 @@ var Expect;
             debugger;
     }
     Expect.notImplemented = notImplemented;
-    /** Expectation that the specified argument loosely equals false. */ //
+    /** Expectation that value is null, undefined, NaN, false, 0, or ''. */ //
     function not(value) {
         if (value && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not loosely equal (==) false.", value))
             debugger;
         return value;
     }
     Expect.not = not;
-    /** Expectation that the specified argument is not undefined. */ //
+    /** Expectation that value is not undefined. */ //
     function notUndefined(value) {
         if (value === void 0 && Expect.util.report("The value is undefined."))
             debugger;
         return value;
     }
     Expect.notUndefined = notUndefined;
-    /** Expectation that any of the specified arguments is not undefined or null. */ //
+    /** Expectation that value is not null, undefined, or NaN. */ //
     function notNull(value) {
         if (value === null) {
             if (Expect.util.report("The value is null."))
@@ -128,11 +128,16 @@ var Expect;
                 debugger;
             return value;
         }
+        if (value !== value) {
+            if (Expect.util.report("The value is NaN."))
+                debugger;
+            return value;
+        }
         return value;
     }
     Expect.notNull = notNull;
     /**
-    Expectation that the argument is a non-empty or whitespace string, a non-empty array, or a non-function object with keys.
+    Expectation that value is a non-empty or whitespace string, a non-empty array, or a non-function object with keys.
     */ //
     function notEmpty(value) {
         if (typeof value === "string") {
@@ -163,35 +168,35 @@ var Expect;
         return value;
     }
     Expect.notEmpty = notEmpty;
-    /** Expectation that the specified value is a positive number, or 0. */ //
+    /** Expectation that value is a number greater than or equal to 0 (mainly used to check .indexOf()). */ //
     function positive(value) {
         if ((value !== +value || value < 0) && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a number greater than or equal to 0.", value))
             debugger;
         return value;
     }
     Expect.positive = positive;
-    /** Expectation that the specified argument is a string. */ //
+    /** Expectation that value is a string. */ //
     function string(value) {
         if (typeof value !== "string" && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a string.", value))
             debugger;
         return value;
     }
     Expect.string = string;
-    /** Expectation that the specified argument is a number. */ //
+    /** Expectation that value is a number. */ //
     function number(value) {
         if ((typeof value !== "number" || value !== value) && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a number.", value))
             debugger;
         return value;
     }
     Expect.number = number;
-    /** Expectation that the specified argument is a boolean. */ //
+    /** Expectation that value is a boolean. */ //
     function boolean(value) {
         if (value !== !!value && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a boolean.", value))
             debugger;
         return value;
     }
     Expect.boolean = boolean;
-    /** Expectation that the specified argument is a primitive (string, number, or boolean). */ //
+    /** Expectation that value is a primitive (string, number, or boolean). */ //
     function primitive(value) {
         if (typeof value !== "string" && (typeof value !== "number" || value !== value) && value !== !!value)
             if (Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a primitive (string, number, boolean).", value))
@@ -199,7 +204,7 @@ var Expect;
         return value;
     }
     Expect.primitive = primitive;
-    /** Expectation that the specified argument is a Date object. */ //
+    /** Expectation that value is a string containing an email address. */ //
     function email(value) {
         if (typeof value !== "string" || !value || value.length < 6 || value.length > 254) {
             if (Expect.util.report("The value " + Expect.util.stringifyValue(value) + " could not be parsed as an email address.", value))
@@ -226,22 +231,22 @@ var Expect;
         return value;
     }
     Expect.email = email;
-    /** Expectation that the specified argument is a Date object. */ //
+    /** Expectation that value is a Date object. */ //
     function date(value) {
         if (!(value instanceof Date) && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a Date object.", value))
             debugger;
         return value;
     }
     Expect.date = date;
-    /** Expectation that the specified value is a callable function. */ //
-    function callable(value) {
+    /** Expectation that value is a function. */ //
+    function func(value) {
         if (typeof value !== "function" && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a function.", value))
             debugger;
         return value;
     }
-    Expect.callable = callable;
-    /** Expectation that the specified argument is a TypeScript-style enum. */ //
-    function enumerated(value) {
+    Expect.func = func;
+    /** Expectation that value is a TypeScript-style enum. */ //
+    function enumeration(value) {
         var isEnum = true;
         if (Object.prototype.toString.call(value) !== "[object Object]") {
             isEnum = false;
@@ -264,9 +269,9 @@ var Expect;
             debugger;
         return value;
     }
-    Expect.enumerated = enumerated;
+    Expect.enumeration = enumeration;
     /**
-    Expectation that the specified argument is an array.
+    Expectation that value is an array.
     Use of the rest parameter checks that the items of the array are all of one of the specified types.
     Valid values are String, Number, Boolean, null, undefined, a constructor function, or primitive literals.
     */ //
@@ -291,7 +296,7 @@ var Expect;
     }
     Expect.array = array;
     /**
-    Expectation that the specified argument is an object.
+    Expectation that value is an object.
     Use of the rest parameter checks that the members of the object are all of one of the specified types.
     Valid values are String, Number, Boolean, null, undefined, or a constructor function.
     */ //
@@ -317,7 +322,7 @@ var Expect;
         return value;
     }
     Expect.object = object;
-    /** Expectation that the specified argument set to comply with one of the specified signatures (overloads). */ //
+    /** Expectation that the argument set to comply with one of the specified signatures (overloads). */ //
     function overloads(args) {
         var overloads = [];
         for (var _i = 1; _i < arguments.length; _i++) {
@@ -356,8 +361,8 @@ var Expect;
     Expect.optional = function () { };
     /** The handler function to call when an expectation fails. */ //
     Expect.handler = null;
-    /** Whether or not errors should be thrown when an expectation fails. */ //
-    Expect.useErrors = false;
+    /** Whether or not exceptions should be thrown when an expectation fails. */ //
+    Expect.useExceptions = false;
     /**
     Whether or not debugger; statements should be triggers when an Expectation fails.
     Automatically disables after the first Expectation fails.
@@ -386,7 +391,7 @@ var Expect;
                     handlerError = e;
                 }
             }
-            if (!Expect.useErrors || typeof console !== "undefined") {
+            if (!Expect.useExceptions || typeof console !== "undefined") {
                 var output = function (msg) {
                     return typeof console.error === "function" ?
                         console.error(msg) :
@@ -669,8 +674,8 @@ var Expect;
                 Expect.not,
                 Expect.notEmpty,
                 Expect.positive,
-                Expect.enumerated,
                 Expect.email,
+                Expect.enumeration,
                 Expect.optional,
                 Expect.rest,
                 Expect.any
@@ -742,7 +747,7 @@ var Enumeration;
     })();
     // Semantic expectations tests
     (function () {
-        fail(function () { return Expect.fail(); });
+        fail(function () { return Expect.never(); });
         fail(function () { return Expect.abstract(); });
         fail(function () { return Expect.notImplemented(); });
         fail(function () { return Expect.not(1); });
@@ -787,11 +792,11 @@ var Enumeration;
         pass(function () { return Expect.email("jimbos+email@some-really-long-email.something.extension"); });
         fail(function () { return Expect.email("jimbo_gmail.com"); });
         fail(function () { return Expect.email(""); });
-        pass(function () { return Expect.callable(function () { }); });
-        fail(function () { return Expect.callable({}); });
-        pass(function () { return Expect.enumerated(Enumeration); });
-        fail(function () { return Expect.enumerated({}); });
-        fail(function () { return Expect.enumerated([0, 1, 2]); });
+        pass(function () { return Expect.func(function () { }); });
+        fail(function () { return Expect.func({}); });
+        pass(function () { return Expect.enumeration(Enumeration); });
+        fail(function () { return Expect.enumeration({}); });
+        fail(function () { return Expect.enumeration([0, 1, 2]); });
     })();
     // Contents tests
     (function () {
@@ -931,6 +936,6 @@ var Enumeration;
         fail(function () { return overloadable("", 0, "", ""); });
         fail(function () { Expect["overloads"](arguments); });
     })();
-    console.log("All tests passed.");
+    console.log("All tests have run.");
 })();
 //# sourceMappingURL=Expects.js.map
