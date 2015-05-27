@@ -25,15 +25,7 @@ function stuff() { return Be.notNull(getSomethingThatMightBeNull()); }
 Integrating **Be** into your coding style will substantially increase the quality of your code, by calling out runtime errors as early as possible. If you are a framework developer, or are otherwise distributing an API library, Be can substantially increase the ease at which your users can consume your API, as it often alleviates them from having to plow through your docs when something goes wrong.
 
 #Installation
-You can get started as easily as:
-```html
-<script src="//back.io/Be.js"></script>
-```
-or
-```
-npm install expects
-```
-Or, you can just download Be.js or Be.ts from the repository and include it in your project. Be has no dependencies, and does not rely on any specific environment (Browser, Node.js, etc).
+Download Be.js or Be.ts from the repository and include it in your project. Be has no dependencies, and does not rely on any specific environment (Browser, Node.js, etc).
 
 #Usage
 You should `Be()` at the top of most functions (especially when they're exposed in your public API), any time you store data in long-lived member variables, or any time there is any kind of ambiguity. The idea is for you, or anyone using your code to get notification about errors as early as possible. It's very time consuming to debug code where invalid data makes it way through 10 different function calls, gets saved to a member variable, is accessed later, and then generates a bizarre error.
