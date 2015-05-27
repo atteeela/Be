@@ -3,7 +3,11 @@
 
 **Be** is a semantic assertion library for JavaScript and TypeScript that I wrote for [Back.io](https://back.io). (Back.io is a JSFiddle-style object-relational BaaS. If you're more of a front-end person and would like to build data-driven web apps without involving server code, you should really [check it out](https://back.io). It's awesome!).
 
-Be does run-time type and value checking on incoming function arguments, return values, etc. When these checks fail, it will output highly informative error messages to the console, and optionally notify your bug tracker.
+Differences from most other assertion libraries:
+
+- It optionally breaks with `debugger` statements instead of throwing exceptions (rationale below).
+- You can make it do run-time type checking of incoming function arguments it's TypeScript-style method signature declaration system, which supports optional and rest parameters (important for API vendors).
+- It outputs highly descriptive failure messages to the console, and optionally to your bug tracker, when things go wrong (critical for API vendors).
 
 For example:
 
