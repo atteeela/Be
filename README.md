@@ -12,7 +12,7 @@ var bogus = {};
 Expect(bogus, String, Number);
 ```
 
-Produces the following error if `value` is not a string or number:
+Produces the following error because `bogus` is not a string or number:
 
 ![Expects]
 (screenshot.png)
