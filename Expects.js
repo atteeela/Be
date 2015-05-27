@@ -27,7 +27,7 @@ function Expect(value) {
         }
         else {
             var signature = Expect.util.parseSignature(constraint);
-            if (Expect.util.hasErrors) {
+            if (Expect.util.hasErrors()) {
                 if (Expect.util.flush())
                     debugger;
                 return;
@@ -39,7 +39,7 @@ function Expect(value) {
                 return;
             }
             Expect.util.checkArguments(signature, args);
-            if (Expect.util.hasErrors) {
+            if (Expect.util.hasErrors()) {
                 if (Expect.util.flush())
                     debugger;
                 return;
@@ -336,7 +336,7 @@ var Expect;
         var signatures = [];
         for (var i = -1; ++i < overloads.length;) {
             var signature = Expect.util.parseSignature(overloads[i]);
-            if (Expect.util.hasErrors) {
+            if (Expect.util.hasErrors()) {
                 if (Expect.util.flush())
                     debugger;
                 return;
@@ -344,8 +344,12 @@ var Expect;
             signatures.push(signature);
             if (!Expect.util.checkLength(signature, args))
                 if (!Expect.util.checkArguments(signature, args))
-                    return;
+                    if (!Expect.util.hasErrors())
+                        return;
+            /* Clear any errors that were generated, because we're going to try another overload. */
+            Expect.util.clearErrors();
         }
+        /* If we get to here, it's because none of the overloads worked. */
         var overloadsText = "";
         for (var _a = 0; _a < signatures.length; _a++) {
             var sig = signatures[_a];
@@ -379,7 +383,7 @@ var Expect;
                 "Invalid signature: " + message :
                 "Failed expectation: " + message;
             if (reportDeferred) {
-                reportMessages.push(message);
+                util.reportMessages.push(message);
                 if (hasValue) {
                     reportValue = value;
                     reportValueSet = true;
@@ -399,7 +403,7 @@ var Expect;
                         handlerError = e;
                     }
                 }
-                if (Expect.useExceptions || typeof console !== "undefined")
+                if (Expect.useExceptions || typeof console === "undefined")
                     throw error;
                 var output = function (msg) {
                     return typeof console.error === "function" ?
@@ -417,12 +421,10 @@ var Expect;
         util.report = report;
         /** Flushes out all deferred errors. */ //
         function flush() {
-            var messages = reportMessages.join("\r\n");
-            reportMessages.length = 0;
+            var messages = util.reportMessages.join("\r\n");
             var value = reportValue;
-            reportValue = null;
             var valueSet = reportValueSet;
-            reportValueSet = false;
+            clearErrors();
             return valueSet ? report(messages, value) : report(messages);
         }
         util.flush = flush;
@@ -431,14 +433,22 @@ var Expect;
             reportDeferred = true;
             fn();
             reportDeferred = false;
+            return !!util.reportMessages.length;
         }
         util.defer = defer;
         /** */ //
         function hasErrors() {
-            return !!reportMessages.length;
+            return !!util.reportMessages.length;
         }
         util.hasErrors = hasErrors;
-        var reportMessages = [];
+        /** */ //
+        function clearErrors() {
+            util.reportMessages.length = 0;
+            reportValue = null;
+            reportValueSet = false;
+        }
+        util.clearErrors = clearErrors;
+        util.reportMessages = [];
         var reportValue = null;
         var reportValueSet = false;
         var reportDeferred = false;
@@ -494,6 +504,13 @@ var Expect;
                     return true;
                 else if (typeof part === "function" && value instanceof part)
                     return true;
+                else if (typeof part === "function") {
+                    var fnName = util.getExpectName(part);
+                    if (fnName) {
+                        var failure = defer(function () { return Expect[fnName](value); });
+                        return !failure;
+                    }
+                }
             }
             return false;
         }
@@ -505,7 +522,7 @@ var Expect;
                 minLength = signature.optionalPoint;
             else if (signature.hasRest)
                 minLength--;
-            defer(function () {
+            return defer(function () {
                 if (args.length < minLength)
                     report("The signature expects" + (minLength < signature.parameters.length ? " at least" : "") + " " + minLength + " parameter" + (minLength > 1 ? "s" : "") + " (" + stringifySignature(signature) + "), but " + args.length + " were specified.", args);
                 else if (args.length > signature.parameters.length && !signature.hasRest)
@@ -515,7 +532,7 @@ var Expect;
         util.checkLength = checkLength;
         /** Returns the message to display if there is a type error with one or more of the arguments. */ //
         function checkArguments(signature, args) {
-            defer(function () {
+            return defer(function () {
                 for (var i = -1; ++i < args.length;) {
                     var arg = args[i];
                     var paramIdx = i >= signature.parameters.length ? signature.parameters.length - 1 : i;
@@ -836,6 +853,30 @@ var Enumeration;
         pass(function () { return Expect.enumeration(Enumeration); });
         fail(function () { return Expect.enumeration({}); });
         fail(function () { return Expect.enumeration([0, 1, 2]); });
+    })();
+    // Tests for passable functions
+    (function () {
+        pass(function () { return Expect("stuff", String, Expect.notEmpty); });
+        pass(function () { return Expect("stuff", Expect.notEmpty); });
+        fail(function () { return Expect("", String, Expect.notEmpty); });
+        fail(function () { return Expect("", Expect.notEmpty); });
+        fail(function () { return Expect({}, Expect.notEmpty); });
+        fail(function () { return Expect([], Expect.notEmpty); });
+        pass(function () { return Expect(0, Expect.positive); });
+        pass(function () { return Expect(0, Number, Expect.positive); });
+        fail(function () { return Expect(-10, Expect.positive); });
+        pass(function () { return Expect.array([1, 2, 3], Expect.positive); });
+        pass(function () { return Expect.array(["a", "b", "c", { a: 2 }], Expect.notEmpty); });
+        pass(function () { return Expect.array(["a@b.com", "c@d.com"], Expect.email); });
+        fail(function () { return Expect.array(["", "b", "c", {}, []], Expect.notEmpty); });
+        fail(function () { return Expect.array(["a(at)b.com", "c(at)d.com"], Expect.email); });
+        function fn(email, age, comment) {
+            Expect(arguments, Expect.email, [String, Expect.positive], Expect.notEmpty);
+        }
+        pass(function () { return fn("a@b.com", 23, "comments"); });
+        pass(function () { return fn("c@d.com", "13", [1, 2, 3]); });
+        fail(function () { return fn("", -1, "x"); });
+        fail(function () { return fn("e@f.com", -1, "x"); });
     })();
     // Contents tests
     (function () {

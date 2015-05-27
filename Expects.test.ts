@@ -114,6 +114,39 @@ enum Enumeration
 		fail(() => Expect.enumeration([0, 1, 2]));
 	})();
 	
+	// Tests for passable functions
+	(() =>
+	{
+		pass(() => Expect("stuff", String, Expect.notEmpty));
+		pass(() => Expect("stuff", Expect.notEmpty));
+		fail(() => Expect("", String, Expect.notEmpty));
+		fail(() => Expect("", Expect.notEmpty));
+		fail(() => Expect({}, Expect.notEmpty));
+		fail(() => Expect([], Expect.notEmpty));
+		
+		pass(() => Expect(0, Expect.positive));
+		pass(() => Expect(0, Number, Expect.positive));
+		fail(() => Expect(-10, Expect.positive));
+		
+		pass(() => Expect.array([1, 2, 3], Expect.positive));
+		pass(() => Expect.array(["a", "b", "c", { a: 2 }], Expect.notEmpty));
+		pass(() => Expect.array(["a@b.com", "c@d.com"], Expect.email));
+		
+		fail(() => Expect.array(["", "b", "c", {}, []], Expect.notEmpty));
+		fail(() => Expect.array(["a(at)b.com", "c(at)d.com"], Expect.email));
+		
+		function fn(email, age, comment)
+		{
+			Expect(arguments, Expect.email, [String, Expect.positive], Expect.notEmpty);
+		}
+		
+		pass(() => fn("a@b.com", 23, "comments"));
+		pass(() => fn("c@d.com", "13", [1, 2, 3]));
+		
+		fail(() => fn("", -1, "x"));
+		fail(() => fn("e@f.com", -1, "x"));
+	})();
+	
 	// Contents tests
 	(() =>
 	{
