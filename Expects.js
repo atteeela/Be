@@ -27,20 +27,21 @@ function Expect(value) {
         }
         else {
             var signature = Expect.util.parseSignature(constraint);
-            if (Expect.util.hasErrors) {
-                if (Expect.util.flush())
+            if (signature.parseError) {
+                if (Expect.util.report(signature.parseError, signature))
                     debugger;
                 return;
             }
             /* Bad input checks */
-            if (Expect.util.checkLength(signature, args)) {
-                if (Expect.util.flush())
+            var checkLengthMessage = Expect.util.checkLength(signature, args);
+            if (checkLengthMessage) {
+                if (Expect.util.report(checkLengthMessage, args))
                     debugger;
                 return;
             }
-            Expect.util.checkArguments(signature, args);
-            if (Expect.util.hasErrors) {
-                if (Expect.util.flush())
+            var checkArgumentsMessage = Expect.util.checkArguments(signature, args);
+            if (checkArgumentsMessage) {
+                if (Expect.util.report(checkArgumentsMessage, args))
                     debugger;
                 return;
             }
@@ -78,11 +79,11 @@ var Expect;
     Expect.ExpectationError = ExpectationError;
     ExpectationError.prototype = new Error;
     /** Expectation that the execution point will never reach the current location. */ //
-    function never() {
+    function fail() {
         if (Expect.util.report("An invalid location has been reached in the program."))
             debugger;
     }
-    Expect.never = never;
+    Expect.fail = fail;
     /** Expectation that the function is never called directly, and the only implementations exist in derived types. */ //
     function abstract() {
         if (Expect.util.report("This function must be overridden by an inheritor."))
@@ -101,21 +102,21 @@ var Expect;
             debugger;
     }
     Expect.notImplemented = notImplemented;
-    /** Expectation that value is null, undefined, NaN, false, 0, or ''. */ //
+    /** Expectation that the specified argument loosely equals false. */ //
     function not(value) {
         if (value && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not loosely equal (==) false.", value))
             debugger;
         return value;
     }
     Expect.not = not;
-    /** Expectation that value is not undefined. */ //
+    /** Expectation that the specified argument is not undefined. */ //
     function notUndefined(value) {
         if (value === void 0 && Expect.util.report("The value is undefined."))
             debugger;
         return value;
     }
     Expect.notUndefined = notUndefined;
-    /** Expectation that value is not null, undefined, or NaN. */ //
+    /** Expectation that any of the specified arguments is not undefined or null. */ //
     function notNull(value) {
         if (value === null) {
             if (Expect.util.report("The value is null."))
@@ -127,16 +128,11 @@ var Expect;
                 debugger;
             return value;
         }
-        if (value !== value) {
-            if (Expect.util.report("The value is NaN."))
-                debugger;
-            return value;
-        }
         return value;
     }
     Expect.notNull = notNull;
     /**
-    Expectation that value is a non-empty or whitespace string, a non-empty array, or a non-function object with keys.
+    Expectation that the argument is a non-empty or whitespace string, a non-empty array, or a non-function object with keys.
     */ //
     function notEmpty(value) {
         if (typeof value === "string") {
@@ -167,35 +163,35 @@ var Expect;
         return value;
     }
     Expect.notEmpty = notEmpty;
-    /** Expectation that value is a number greater than or equal to 0 (mainly used to check .indexOf()). */ //
+    /** Expectation that the specified value is a positive number, or 0. */ //
     function positive(value) {
         if ((value !== +value || value < 0) && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a number greater than or equal to 0.", value))
             debugger;
         return value;
     }
     Expect.positive = positive;
-    /** Expectation that value is a string. */ //
+    /** Expectation that the specified argument is a string. */ //
     function string(value) {
         if (typeof value !== "string" && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a string.", value))
             debugger;
         return value;
     }
     Expect.string = string;
-    /** Expectation that value is a number. */ //
+    /** Expectation that the specified argument is a number. */ //
     function number(value) {
         if ((typeof value !== "number" || value !== value) && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a number.", value))
             debugger;
         return value;
     }
     Expect.number = number;
-    /** Expectation that value is a boolean. */ //
+    /** Expectation that the specified argument is a boolean. */ //
     function boolean(value) {
         if (value !== !!value && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a boolean.", value))
             debugger;
         return value;
     }
     Expect.boolean = boolean;
-    /** Expectation that value is a primitive (string, number, or boolean). */ //
+    /** Expectation that the specified argument is a primitive (string, number, or boolean). */ //
     function primitive(value) {
         if (typeof value !== "string" && (typeof value !== "number" || value !== value) && value !== !!value)
             if (Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a primitive (string, number, boolean).", value))
@@ -203,7 +199,7 @@ var Expect;
         return value;
     }
     Expect.primitive = primitive;
-    /** Expectation that value is a string containing an email address. */ //
+    /** Expectation that the specified argument is a Date object. */ //
     function email(value) {
         if (typeof value !== "string" || !value || value.length < 6 || value.length > 254) {
             if (Expect.util.report("The value " + Expect.util.stringifyValue(value) + " could not be parsed as an email address.", value))
@@ -230,22 +226,22 @@ var Expect;
         return value;
     }
     Expect.email = email;
-    /** Expectation that value is a Date object. */ //
+    /** Expectation that the specified argument is a Date object. */ //
     function date(value) {
         if (!(value instanceof Date) && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a Date object.", value))
             debugger;
         return value;
     }
     Expect.date = date;
-    /** Expectation that value is a function. */ //
-    function func(value) {
+    /** Expectation that the specified value is a callable function. */ //
+    function callable(value) {
         if (typeof value !== "function" && Expect.util.report("The value " + Expect.util.stringifyValue(value) + " is not a function.", value))
             debugger;
         return value;
     }
-    Expect.func = func;
-    /** Expectation that value is a TypeScript-style enum. */ //
-    function enumeration(value) {
+    Expect.callable = callable;
+    /** Expectation that the specified argument is a TypeScript-style enum. */ //
+    function enumerated(value) {
         var isEnum = true;
         if (Object.prototype.toString.call(value) !== "[object Object]") {
             isEnum = false;
@@ -268,9 +264,9 @@ var Expect;
             debugger;
         return value;
     }
-    Expect.enumeration = enumeration;
+    Expect.enumerated = enumerated;
     /**
-    Expectation that value is an array.
+    Expectation that the specified argument is an array.
     Use of the rest parameter checks that the items of the array are all of one of the specified types.
     Valid values are String, Number, Boolean, null, undefined, a constructor function, or primitive literals.
     */ //
@@ -295,7 +291,7 @@ var Expect;
     }
     Expect.array = array;
     /**
-    Expectation that value is an object.
+    Expectation that the specified argument is an object.
     Use of the rest parameter checks that the members of the object are all of one of the specified types.
     Valid values are String, Number, Boolean, null, undefined, or a constructor function.
     */ //
@@ -321,7 +317,7 @@ var Expect;
         return value;
     }
     Expect.object = object;
-    /** Expectation that the argument set to comply with one of the specified signatures (overloads). */ //
+    /** Expectation that the specified argument set to comply with one of the specified signatures (overloads). */ //
     function overloads(args) {
         var overloads = [];
         for (var _i = 1; _i < arguments.length; _i++) {
@@ -336,12 +332,12 @@ var Expect;
         var signatures = [];
         for (var i = -1; ++i < overloads.length;) {
             var signature = Expect.util.parseSignature(overloads[i]);
-            if (Expect.util.hasErrors) {
-                if (Expect.util.flush())
+            signatures.push(signature);
+            if (signature.parseError) {
+                if (Expect.util.report(signature.parseError, signature))
                     debugger;
                 return;
             }
-            signatures.push(signature);
             if (!Expect.util.checkLength(signature, args))
                 if (!Expect.util.checkArguments(signature, args))
                     return;
@@ -360,8 +356,8 @@ var Expect;
     Expect.optional = function () { };
     /** The handler function to call when an expectation fails. */ //
     Expect.handler = null;
-    /** Whether or not exceptions should be thrown when an expectation fails. */ //
-    Expect.useExceptions = false;
+    /** Whether or not errors should be thrown when an expectation fails. */ //
+    Expect.useErrors = false;
     /**
     Whether or not debugger; statements should be triggers when an Expectation fails.
     Automatically disables after the first Expectation fails.
@@ -378,29 +374,19 @@ var Expect;
             message = value instanceof Signature ?
                 "Invalid signature: " + message :
                 "Failed expectation: " + message;
-            if (reportDeferred) {
-                reportMessages.push(message);
-                if (hasValue) {
-                    reportValue = value;
-                    reportValueSet = true;
+            var error = new Expect.ExpectationError(message);
+            if (hasValue)
+                error.value = value;
+            var handlerError = null;
+            if (Expect.handler instanceof Function) {
+                try {
+                    Expect.handler(error);
                 }
-                return false;
+                catch (e) {
+                    handlerError = e;
+                }
             }
-            else {
-                var error = new Expect.ExpectationError(message);
-                if (hasValue)
-                    error.value = value;
-                var handlerError = null;
-                if (Expect.handler instanceof Function) {
-                    try {
-                        Expect.handler(error);
-                    }
-                    catch (e) {
-                        handlerError = e;
-                    }
-                }
-                if (Expect.useExceptions || typeof console !== "undefined")
-                    throw error;
+            if (!Expect.useErrors || typeof console !== "undefined") {
                 var output = function (msg) {
                     return typeof console.error === "function" ?
                         console.error(msg) :
@@ -411,37 +397,12 @@ var Expect;
                     console.log("%cYour error handler threw an error.", "color: red, font-size: 150%");
                     output(handlerError);
                 }
-                return Expect.useDebuggers;
             }
+            else
+                throw error;
+            return Expect.useDebuggers;
         }
         util.report = report;
-        /** Flushes out all deferred errors. */ //
-        function flush() {
-            var messages = reportMessages.join("\r\n");
-            reportMessages.length = 0;
-            var value = reportValue;
-            reportValue = null;
-            var valueSet = reportValueSet;
-            reportValueSet = false;
-            return valueSet ? report(messages, value) : report(messages);
-        }
-        util.flush = flush;
-        /** Executes the specified function, returning an errors that are collected (without breaking on them immediately). */ //
-        function defer(fn) {
-            reportDeferred = true;
-            fn();
-            reportDeferred = false;
-        }
-        util.defer = defer;
-        /** */ //
-        function hasErrors() {
-            return !!reportMessages.length;
-        }
-        util.hasErrors = hasErrors;
-        var reportMessages = [];
-        var reportValue = null;
-        var reportValueSet = false;
-        var reportDeferred = false;
         /** Returns whether the value is one of the obvious errors (NaN, null unless allowed, undefined unless allowed). */ //
         function checkObvious(value, constraint) {
             /* NaN is always an error. */
@@ -505,28 +466,23 @@ var Expect;
                 minLength = signature.optionalPoint;
             else if (signature.hasRest)
                 minLength--;
-            defer(function () {
-                if (args.length < minLength)
-                    report("The signature expects" + (minLength < signature.parameters.length ? " at least" : "") + " " + minLength + " parameter" + (minLength > 1 ? "s" : "") + " (" + stringifySignature(signature) + "), but " + args.length + " were specified.", args);
-                else if (args.length > signature.parameters.length && !signature.hasRest)
-                    report("The signature expects" + (signature.optionalPoint > -1 ? " at most" : "") + " " + signature.parameters.length + " parameter" + (signature.parameters.length > 1 ? "s" : "") + " (" + stringifySignature(signature) + "), but " + args.length + " were specified.", args);
-            });
+            if (args.length < minLength)
+                return "The signature expects" + (minLength < signature.parameters.length ? " at least" : "") + " " + minLength + " parameter" + (minLength > 1 ? "s" : "") + " (" + stringifySignature(signature) + "), but " + args.length + " were specified.";
+            if (args.length > signature.parameters.length && !signature.hasRest)
+                return "The signature expects" + (signature.optionalPoint > -1 ? " at most" : "") + " " + signature.parameters.length + " parameter" + (signature.parameters.length > 1 ? "s" : "") + " (" + stringifySignature(signature) + "), but " + args.length + " were specified.";
+            return "";
         }
         util.checkLength = checkLength;
         /** Returns the message to display if there is a type error with one or more of the arguments. */ //
         function checkArguments(signature, args) {
-            defer(function () {
-                for (var i = -1; ++i < args.length;) {
-                    var arg = args[i];
-                    var paramIdx = i >= signature.parameters.length ? signature.parameters.length - 1 : i;
-                    var param = signature.parameters[paramIdx];
-                    for (var key in param)
-                        if (param[key] === true && (key in Expect))
-                            Expect[key](arg);
-                    if (!util.checkConstraint(arg, param.types))
-                        report("Argument " + (i + 1) + " is " + stringifyValue(arg) + ", but it's expected to comply with the constraint: " + stringifyParameter(param) + ".", args);
-                }
-            });
+            for (var i = -1; ++i < args.length;) {
+                var arg = args[i];
+                var paramIdx = i >= signature.parameters.length ? signature.parameters.length - 1 : i;
+                var param = signature.parameters[paramIdx];
+                if (!util.checkConstraint(arg, param.types))
+                    return "Argument " + (i + 1) + " is " + stringifyValue(arg) + ", but it's expected to comply with the constraint: " + stringifyParameter(param) + ".";
+            }
+            return "";
         }
         util.checkArguments = checkArguments;
         /** Creates a signature AST-thing from the input array. */ //
@@ -545,33 +501,31 @@ var Expect;
                 }
                 return constraint === expectMarker;
             };
-            defer(function () {
-                for (var i = -1; ++i < rawSignature.length;) {
-                    var constraint = rawSignature[i] instanceof Array ? rawSignature[i] : [rawSignature[i]];
-                    if (extract(constraint, Expect.rest)) {
-                        if (i !== rawSignature.length - 1) {
-                            report("Only the last parameter be a rest parameter.", rawSignature);
-                            break;
-                        }
-                        if (extract(constraint, Expect.optional)) {
-                            report("Rest parameters can not be optional.", rawSignature);
-                            break;
-                        }
-                        signature.hasRest = true;
-                    }
-                    if (extract(constraint, Expect.optional)) {
-                        if (signature.optionalPoint < 0) {
-                            var op = signature.optionalPoint;
-                            signature.optionalPoint = i;
-                        }
-                    }
-                    else if (signature.optionalPoint > -1 && !signature.hasRest) {
-                        report("Required parameters must go before optional and rest parameters.", rawSignature);
+            for (var i = -1; ++i < rawSignature.length;) {
+                var constraint = rawSignature[i] instanceof Array ? rawSignature[i] : [rawSignature[i]];
+                if (extract(constraint, Expect.rest)) {
+                    if (i !== rawSignature.length - 1) {
+                        signature.parseError = "Only the last parameter be a rest parameter.";
                         break;
                     }
-                    signature.parameters.push(parseParameter(constraint));
+                    if (extract(constraint, Expect.optional)) {
+                        signature.parseError = "Rest parameters can not be optional.";
+                        break;
+                    }
+                    signature.hasRest = true;
                 }
-            });
+                if (extract(constraint, Expect.optional)) {
+                    if (signature.optionalPoint < 0) {
+                        var op = signature.optionalPoint;
+                        signature.optionalPoint = i;
+                    }
+                }
+                else if (signature.optionalPoint > -1 && !signature.hasRest) {
+                    signature.parseError = "Required parameters must go before optional and rest parameters.";
+                    break;
+                }
+                signature.parameters.push(parseParameter(constraint));
+            }
             return signature;
         }
         util.parseSignature = parseSignature;
@@ -715,8 +669,8 @@ var Expect;
                 Expect.not,
                 Expect.notEmpty,
                 Expect.positive,
+                Expect.enumerated,
                 Expect.email,
-                Expect.enumeration,
                 Expect.optional,
                 Expect.rest,
                 Expect.any
@@ -731,6 +685,7 @@ var Expect;
                 this.parameters = [];
                 this.optionalPoint = -1;
                 this.hasRest = false;
+                this.parseError = "";
             }
             return Signature;
         })();
@@ -743,6 +698,7 @@ var Expect;
                 this.positive = false;
                 this.enumerated = false;
                 this.email = false;
+                this.parseError = "";
             }
             return Parameter;
         })();
@@ -786,7 +742,7 @@ var Enumeration;
     })();
     // Semantic expectations tests
     (function () {
-        fail(function () { return Expect.never(); });
+        fail(function () { return Expect.fail(); });
         fail(function () { return Expect.abstract(); });
         fail(function () { return Expect.notImplemented(); });
         fail(function () { return Expect.not(1); });
@@ -831,11 +787,11 @@ var Enumeration;
         pass(function () { return Expect.email("jimbos+email@some-really-long-email.something.extension"); });
         fail(function () { return Expect.email("jimbo_gmail.com"); });
         fail(function () { return Expect.email(""); });
-        pass(function () { return Expect.func(function () { }); });
-        fail(function () { return Expect.func({}); });
-        pass(function () { return Expect.enumeration(Enumeration); });
-        fail(function () { return Expect.enumeration({}); });
-        fail(function () { return Expect.enumeration([0, 1, 2]); });
+        pass(function () { return Expect.callable(function () { }); });
+        fail(function () { return Expect.callable({}); });
+        pass(function () { return Expect.enumerated(Enumeration); });
+        fail(function () { return Expect.enumerated({}); });
+        fail(function () { return Expect.enumerated([0, 1, 2]); });
     })();
     // Contents tests
     (function () {
@@ -975,6 +931,6 @@ var Enumeration;
         fail(function () { return overloadable("", 0, "", ""); });
         fail(function () { Expect["overloads"](arguments); });
     })();
-    console.log("All tests have run.");
+    console.log("All tests passed.");
 })();
 //# sourceMappingURL=Expects.js.map
