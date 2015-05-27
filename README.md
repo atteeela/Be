@@ -37,7 +37,7 @@ You should `Be()` at the top of most functions (especially when they're exposed 
 
 In short, **use them everywhere**, even when it may seem superfluous. They're easy to add and remove.
 
-A difference from other libraries in that, by default, it uses `debugger;` statements to break on unmet expectations rather than throwing exceptions. **This is key**. Relying on exceptions during development is annoying because they blow away the current turn of the event loop, causing you to have to restart the debugging process. Often times the failed expectation isn't that much of a problem (especially when you're using `Be()` liberally) and you want to keep going. This whole library was written in such a way that every time an expectation fails, you can always step over **exactly 3 times** to get back into your code. (Muscle memory FTW!)
+A difference from other libraries in that, by default, it uses `debugger;` statements to break on unmet expectations rather than throwing exceptions. **This is key**. Relying on exceptions during development is annoying because they blow away the current turn of the event loop, causing you to have to restart the debugging process. Often times the failed expectation isn't that much of a problem (especially when you're using `Be()` liberally) and you want to keep going. This whole library was written in such a way that every time an expectation fails, you can always step over **exactly 2 times** to get back into your code. (Muscle memory FTW!)
 
 #Tutorial
 
