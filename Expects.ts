@@ -46,7 +46,7 @@ function Expect(value: any, ...constraint: any[])
 		else
 		{
 			let signature = Expect.util.parseSignature(constraint);
-			if (Expect.util.hasErrors())
+			if (Expect.util.hasErrors)
 			{
 				if (Expect.util.flush())
 					debugger;
@@ -64,7 +64,7 @@ function Expect(value: any, ...constraint: any[])
 			}
 			
 			Expect.util.checkArguments(signature, args);
-			if (Expect.util.hasErrors())
+			if (Expect.util.hasErrors)
 			{
 				if (Expect.util.flush())
 					debugger;
@@ -451,7 +451,7 @@ module Expect
 		for (let i = -1; ++i < overloads.length;)
 		{
 			let signature = util.parseSignature(overloads[i]);
-			if (util.hasErrors())
+			if (util.hasErrors)
 			{
 				if (util.flush())
 					debugger;
@@ -463,14 +463,8 @@ module Expect
 			
 			if (!util.checkLength(signature, args))
 				if (!util.checkArguments(signature, args))
-					if (!util.hasErrors())
-						return;
-			
-			/* Clear any errors that were generated, because we're going to try another overload. */
-			util.clearErrors();
+					return;
 		}
-		
-		/* If we get to here, it's because none of the overloads worked. */
 		
 		let overloadsText = "";
 		
@@ -542,7 +536,7 @@ module Expect.util
 				}
 			}
 			
-			if (Expect.useExceptions || typeof console === "undefined")
+			if (Expect.useExceptions || typeof console !== "undefined")
 				throw error;
 			
 			let output = msg => 
@@ -566,9 +560,13 @@ module Expect.util
 	export function flush()
 	{
 		let messages = reportMessages.join("\r\n");
+		reportMessages.length = 0;
+		
 		let value = reportValue;
+		reportValue = null;
+		
 		let valueSet = reportValueSet;
-		clearErrors();
+		reportValueSet = false;
 		
 		return valueSet ? report(messages, value) : report(messages);
 	}
@@ -579,8 +577,6 @@ module Expect.util
 		reportDeferred = true;
 		fn();
 		reportDeferred = false;
-		
-		return !!reportMessages.length;
 	}
 	
 	/** *///
@@ -589,15 +585,7 @@ module Expect.util
 		return !!reportMessages.length;
 	}
 	
-	/** *///
-	export function clearErrors()
-	{
-		reportMessages.length = 0;
-		reportValue = null;
-		reportValueSet = false;
-	}
-	
-	export var reportMessages: string[] = [];
+	var reportMessages: string[] = [];
 	var reportValue = null;
 	var reportValueSet = false;
 	var reportDeferred = false;
@@ -672,16 +660,6 @@ module Expect.util
 			
 			else if (typeof part === "function" && value instanceof part)
 				return true;
-			
-			else if (typeof part === "function")
-			{
-				var fnName = util.getExpectName(part);
-				if (fnName)
-				{
-					let failure = defer(() => Expect[fnName](value));
-					return !failure;
-				}
-			}
 		}
 		
 		return false;
@@ -698,7 +676,7 @@ module Expect.util
 		else if (signature.hasRest)
 			minLength--;
 		
-		return defer(() =>
+		defer(() =>
 		{
 			if (args.length < minLength)
 				report(`The signature expects${minLength < signature.parameters.length ? " at least" : ""} ${minLength} parameter${minLength > 1 ? "s" : ""} (${stringifySignature(signature)}), but ${args.length} were specified.`, args);
@@ -711,7 +689,7 @@ module Expect.util
 	/** Returns the message to display if there is a type error with one or more of the arguments. *///
 	export function checkArguments(signature: Signature, args: IArguments)
 	{
-		return defer(() =>
+		defer(() =>
 		{
 			for (let i = -1; ++i < args.length;)
 			{
