@@ -36,6 +36,9 @@ enum Enumeration
 		}
 	}
 	
+	Expect({}, String, Number);
+	return;
+	
 	// Basic tests
 	(() =>
 	{

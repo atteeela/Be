@@ -78,7 +78,7 @@ function Expect(value: any, ...constraint: any[])
 	{
 		if (!Expect.util.checkConstraint(value, constraint))
 		{
-			if (Expect.util.report(`Failed expectation: The value ${Expect.util.stringifyValue(value)} does not comply with the constraint: ${Expect.util.stringifyParameter(constraint)}`, value))
+			if (Expect.util.report(`The value ${Expect.util.stringifyValue(value)} does not comply with the constraint: ${Expect.util.stringifyParameter(constraint)}`, value))
 				debugger;
 			
 			return value;
