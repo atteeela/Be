@@ -263,12 +263,12 @@ Use `Be.abstract()` to mark out functions that should have been overridden in a 
 
 In production, or while running your unit tests, you'll want exceptions to be thrown on unmet expectations:
 ```javascript
-Be.useExceptions = true;
+Be.exceptional = true;
 ```
 
 The `debugger;` statements are disabled after the first expectation is unmet (it's usually annoying otherwise). You can turn them back on with:
 ```javascript
-Be.useDebuggers = true;
+Be.debuggable = true;
 ```
 
 If you want to send errors to your bug tracker, you can set a function that will be called when an expectation is unmet. The error argument is an `BeError` that contains the descriptive error message, as well as a `.value` property that stores the invalid value (or arguments list) that caused the error.
