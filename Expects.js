@@ -736,6 +736,8 @@ var Enumeration;
             debugger;
         }
     };
+    Expect({}, String, Number);
+    return;
     // Basic tests
     (function () {
         var img = new Image();
