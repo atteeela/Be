@@ -8,7 +8,8 @@ It allows you to declare the expectations that you have about incoming function 
 For example:
 
 ```javascript
-Expect(someValue, String, Number);
+var bogus = {};
+Expect(bogus, String, Number);
 ```
 
 Produces the following error if `value` is not a string or number:
