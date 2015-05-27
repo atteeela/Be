@@ -7,11 +7,10 @@
 		"noImplicitAny": false,
 		"removeComments": false,
 		"noLib": false,
-		"out": "Expects.js",
 		"sourceMap": true
 	},
 	"files": [
-		"Expects.ts",
-		"Expects.test.ts"
+		"Be.ts",
+		"Be.test.ts"
 	]
 }

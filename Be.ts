@@ -1,16 +1,16 @@
 
 /**
-Expectation that the value loosely equals one of the specified types.  If the rest parameters are omitted, the value is checked for loose equality to true.
+Makes sure that the value loosely equals one of the specified types.  If the rest parameters are omitted, the value is checked for loose equality to true.
 *///
-function Expect<T>(value: T, ...parameter: any[]): T;
+function Be<T>(value: T, ...parameter: any[]): T;
 
 /**
-Expectation that the arguments to comply with the specified signature. If the signature is omitted, the arguments are checked against null, undefined, and NaN.
+Makes sure that the arguments to comply with the specified signature. If the signature is omitted, the arguments are checked against null, undefined, and NaN.
 *///
-function Expect(arguments: IArguments, ...signature: any[]): void;
-function Expect(value: any, ...constraint: any[])
+function Be(arguments: IArguments, ...signature: any[]): void;
+function Be(value: any, ...constraint: any[])
 {
-	if (Expect.util.isArguments(value))
+	if (Be.util.isArguments(value))
 	{
 		let args: IArguments = value;
 		
@@ -22,21 +22,21 @@ function Expect(value: any, ...constraint: any[])
 				
 				if (a === void 0)
 				{
-					if (Expect.util.report(`Argument ${i + 1} is undefined, and this function does not accept null, undefined, or NaN arguments.`))
+					if (Be.util.report(`Argument ${i + 1} is undefined, and this function does not accept null, undefined, or NaN arguments.`))
 						debugger;
 					
 					return;
 				}
 				else if (a === null)
 				{
-					if (Expect.util.report(`Argument ${i + 1} is null, and this function does not accept null, undefined, or NaN arguments.`))
+					if (Be.util.report(`Argument ${i + 1} is null, and this function does not accept null, undefined, or NaN arguments.`))
 						debugger;
 					
 					return;
 				}
 				else if (a !== a)
 				{
-					if (Expect.util.report(`Argument ${i + 1} is NaN, and this function does not accept null, undefined, or NaN arguments.`))
+					if (Be.util.report(`Argument ${i + 1} is NaN, and this function does not accept null, undefined, or NaN arguments.`))
 						debugger;
 					
 					return;
@@ -45,29 +45,29 @@ function Expect(value: any, ...constraint: any[])
 		}
 		else
 		{
-			let signature = Expect.util.parseSignature(constraint);
+			let signature = Be.util.parseSignature(constraint);
 			if (signature.parseError)
 			{
-				if (Expect.util.report(signature.parseError, signature))
+				if (Be.util.report(signature.parseError, signature))
 					debugger;
 				
 				return;
 			}
 			
 			/* Bad input checks */
-			let checkLengthMessage = Expect.util.checkLength(signature, args);
+			let checkLengthMessage = Be.util.checkLength(signature, args);
 			if (checkLengthMessage)
 			{
-				if (Expect.util.report(checkLengthMessage, args))
+				if (Be.util.report(checkLengthMessage, args))
 					debugger;
 				
 				return;
 			}
 			
-			let checkArgumentsMessage = Expect.util.checkArguments(signature, args);
+			let checkArgumentsMessage = Be.util.checkArguments(signature, args);
 			if (checkArgumentsMessage)
 			{
-				if (Expect.util.report(checkArgumentsMessage, args))
+				if (Be.util.report(checkArgumentsMessage, args))
 					debugger;
 				
 				return;
@@ -76,9 +76,9 @@ function Expect(value: any, ...constraint: any[])
 	}
 	else if (constraint.length)
 	{
-		if (!Expect.util.checkConstraint(value, constraint))
+		if (!Be.util.checkConstraint(value, constraint))
 		{
-			if (Expect.util.report(`The value ${Expect.util.stringifyValue(value)} does not comply with the constraint: ${Expect.util.stringifyParameter(constraint)}`, value))
+			if (Be.util.report(`The value ${Be.util.stringifyValue(value)} does not comply with the constraint: ${Be.util.stringifyParameter(constraint)}`, value))
 				debugger;
 			
 			return value;
@@ -86,7 +86,7 @@ function Expect(value: any, ...constraint: any[])
 	}
 	else if (!value)
 	{
-		if (Expect.util.report(`The value ${Expect.util.stringifyValue(value)} is not loosely equal (==) to true.`, value))
+		if (Be.util.report(`The value ${Be.util.stringifyValue(value)} is not loosely equal (==) to true.`, value))
 			debugger;
 		
 		return value;
@@ -96,10 +96,10 @@ function Expect(value: any, ...constraint: any[])
 }
 
 /**  *///
-module Expect
+module Be
 {
 	/** An error that is generated when an expectation fails. *///
-	export class ExpectationError implements Error
+	export class BeError implements Error
 	{
 		constructor(public message: string)
 		{
@@ -107,7 +107,7 @@ module Expect
 			this.stack = (<any>new Error()).stack || "";
 		}
 		
-		name = "ExpectationError";
+		name = "BeError";
 		value: any = "(No value is associated with this expectation failure.)";
 		stack = "";
 		constraint: string;
@@ -116,38 +116,51 @@ module Expect
 		handlerError: Error;
 	}
 	
-	ExpectationError.prototype = <any>new Error;
+	BeError.prototype = <any>new Error;
 	
-	
-	/** Expectation that the execution point will never reach the current location. *///
-	export function never(): void
+	/** Fails with the specified error message. *///
+	export function helpful(message: string)
 	{
-		if (util.report("An invalid location has been reached in the program."))
+		if (util.report(message))
 			debugger;
 	}
 	
-	/** Expectation that the function is never called directly, and the only implementations exist in derived types. *///
+	/** Makes sure that the execution point will never reach the current location. *///
+	export function broken(value?: any): void
+	{
+		let message = "An invalid location has been reached in the program.";
+		
+		if (arguments.length === 1)
+		{
+			if (util.report(message, value))
+				debugger;
+		}
+		else if (util.report(message))
+			debugger;
+	}
+	
+	/** Makes sure that the function is never called directly, and the only implementations exist in derived types. *///
 	export function abstract()
 	{
 		if (util.report("This function must be overridden by an inheritor."))
 			debugger;
 	}
 	
-	/** Expectation that the property is read only. Intended for use in a setter function. *///
+	/** Makes sure that the property is read only. Intended for use in a setter function. *///
 	export function readOnly()
 	{
 		if (util.report("This property is read-only."))
 			debugger;
 	}
 	
-	/** Expectation that the current function is not implemented. *///
+	/** Makes sure that the current function is not implemented. *///
 	export function notImplemented()
 	{
 		if (util.report("This function has not been implemented."))
 			debugger;
 	}
 	
-	/** Expectation that value is null, undefined, NaN, false, 0, or ''. *///
+	/** Makes sure that value is not null, undefined, NaN, false, 0, or ''. *///
 	export function not<T>(value: T): T
 	{
 		if (value && util.report(`The value ${util.stringifyValue(value)} is not loosely equal (==) false.`, value))
@@ -156,7 +169,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is not undefined. *///
+	/** Makes sure that value is not undefined. *///
 	export function notUndefined<T>(value: T): T
 	{
 		if (value === void 0 && util.report("The value is undefined."))
@@ -165,7 +178,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is not null, undefined, or NaN. *///
+	/** Makes sure that value is not null, undefined, or NaN. *///
 	export function notNull<T>(value: T): T
 	{
 		if (value === null)
@@ -196,7 +209,7 @@ module Expect
 	}
 	
 	/**
-	Expectation that value is a non-empty or whitespace string, a non-empty array, or a non-function object with keys.
+	Makes sure that value is a non-empty or whitespace string, a non-empty array, or a non-function object with keys.
 	*///
 	export function notEmpty<T>(value: T): T
 	{
@@ -240,7 +253,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is a number greater than or equal to 0 (mainly used to check .indexOf()). *///
+	/** Makes sure that value is a number greater than or equal to 0 (mainly used to check .indexOf()). *///
 	export function positive(value: number): number
 	{
 		if ((value !== +value || value < 0) && util.report(`The value ${util.stringifyValue(value)} is not a number greater than or equal to 0.`, value))
@@ -249,7 +262,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is a string. *///
+	/** Makes sure that value is a string. *///
 	export function string(value: any): string
 	{
 		if (typeof value !== "string" && util.report(`The value ${util.stringifyValue(value)} is not a string.`, value))
@@ -258,7 +271,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is a number. *///
+	/** Makes sure that value is a number. *///
 	export function number(value: any): number
 	{
 		if ((typeof value !== "number" || value !== value) && util.report(`The value ${util.stringifyValue(value)} is not a number.`, value))
@@ -267,7 +280,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is a boolean. *///
+	/** Makes sure that value is a boolean. *///
 	export function boolean(value: any): boolean
 	{
 		if (value !== !!value && util.report(`The value ${util.stringifyValue(value)} is not a boolean.`, value))
@@ -276,7 +289,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is a primitive (string, number, or boolean). *///
+	/** Makes sure that value is a primitive (string, number, or boolean). *///
 	export function primitive<T>(value: T): T
 	{
 		if (typeof value !== "string" && (typeof value !== "number" || value !== value) && (<any>value) !== !!value)
@@ -286,7 +299,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is a string containing an email address. *///
+	/** Makes sure that value is a string containing an email address. *///
 	export function email(value: any): string
 	{
 		if (typeof value !== "string" || !value || value.length < 6 || value.length > 254)
@@ -323,7 +336,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is a Date object. *///
+	/** Makes sure that value is a Date object. *///
 	export function date(value: any): Date
 	{
 		if (!(value instanceof Date) && util.report(`The value ${util.stringifyValue(value)} is not a Date object.`, value))
@@ -332,7 +345,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is a function. *///
+	/** Makes sure that value is a function. *///
 	export function func<T>(value: T): T
 	{
 		if (typeof value !== "function" && util.report(`The value ${util.stringifyValue(value)} is not a function.`, value))
@@ -341,7 +354,7 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that value is a TypeScript-style enum. *///
+	/** Makes sure that value is a TypeScript-style enum. *///
 	export function enumeration<T>(value: T): T
 	{
 		let isEnum = true;
@@ -376,7 +389,7 @@ module Expect
 	}
 	
 	/**
-	Expectation that value is an array. 
+	Makes sure that value is an array. 
 	Use of the rest parameter checks that the items of the array are all of one of the specified types.
 	Valid values are String, Number, Boolean, null, undefined, a constructor function, or primitive literals.
 	*///
@@ -404,7 +417,7 @@ module Expect
 	}
 	
 	/**
-	Expectation that value is an object. 
+	Makes sure that value is an object. 
 	Use of the rest parameter checks that the members of the object are all of one of the specified types.
 	Valid values are String, Number, Boolean, null, undefined, or a constructor function.
 	*///
@@ -435,12 +448,12 @@ module Expect
 		return value;
 	}
 	
-	/** Expectation that the argument set to comply with one of the specified signatures (overloads). *///
+	/** Makes sure that the argument set to comply with one of the specified signatures (overloads). *///
 	export function overloads(args: IArguments, ...overloads: any[]): void
 	{
 		if (!overloads || !overloads.length)
 		{
-			if (util.report("Expect.overloads requires an array of signatures.", args))
+			if (util.report("Be.overloads requires an array of signatures.", args))
 				debugger;
 			
 			return;
@@ -456,7 +469,7 @@ module Expect
 			
 			if (signature.parseError)
 			{
-				if (Expect.util.report(signature.parseError, signature))
+				if (Be.util.report(signature.parseError, signature))
 					debugger;
 				
 				return;
@@ -481,19 +494,18 @@ module Expect
 	export var optional = () => {};
 	
 	/** The handler function to call when an expectation fails. *///
-	export var handler: (e: ExpectationError) => void = null;
+	export var handler: (e: BeError) => void = null;
 	
 	/** Whether or not exceptions should be thrown when an expectation fails. *///
-	export var useExceptions = false;
+	export var exceptional = false;
 		
 	/**
-	Whether or not debugger; statements should be triggers when an Expectation fails.
-	Automatically disables after the first Expectation fails.
+	Whether or not debugger statements should be triggered on a failure. Automatically disables after the first failure.
 	*///
-	export var useDebuggers = true;
+	export var debuggable = true;
 }
 
-module Expect.util
+module Be.util
 {
 	/** Reports the specified error and returns whether debugger; statements are enabled. *///
 	export function report(message: string, value?: any): boolean
@@ -504,18 +516,18 @@ module Expect.util
 			"Invalid signature: " + message :
 			"Failed expectation: " + message;
 		
-		let error = new ExpectationError(message);
+		let error = new BeError(message);
 		
 		if (hasValue)
 			error.value = value;
 		
 		let handlerError: Error = null;
 		
-		if (Expect.handler instanceof Function)
+		if (Be.handler instanceof Function)
 		{
 			try
 			{
-				Expect.handler(error);
+				Be.handler(error);
 			}
 			catch (e)
 			{
@@ -523,7 +535,7 @@ module Expect.util
 			}
 		}
 		
-		if (!Expect.useExceptions || typeof console !== "undefined")
+		if (!Be.exceptional || typeof console !== "undefined")
 		{
 			let output = msg => 
 				typeof console.error === "function" ?
@@ -540,7 +552,7 @@ module Expect.util
 		}
 		else throw error;
 		
-		return Expect.useDebuggers;
+		return Be.debuggable;
 	}
 	
 	/** Returns whether the value is one of the obvious errors (NaN, null unless allowed, undefined unless allowed). *///
@@ -684,7 +696,7 @@ module Expect.util
 		{
 			let constraint: any[] = rawSignature[i] instanceof Array ? rawSignature[i] : [rawSignature[i]];
 			
-			if (extract(constraint, Expect.rest))
+			if (extract(constraint, Be.rest))
 			{
 				if (i !== rawSignature.length - 1)
 				{
@@ -692,7 +704,7 @@ module Expect.util
 					break;
 				}
 				
-				if (extract(constraint, Expect.optional))
+				if (extract(constraint, Be.optional))
 				{
 					signature.parseError = "Rest parameters can not be optional.";
 					break;
@@ -701,7 +713,7 @@ module Expect.util
 				signature.hasRest = true;
 			}
 			
-			if (extract(constraint, Expect.optional))
+			if (extract(constraint, Be.optional))
 			{
 				if (signature.optionalPoint < 0)
 				{
@@ -729,7 +741,7 @@ module Expect.util
 			
 		for (let n = constraintArray.length; n-- > 0;)
 		{
-			let expectName = util.getExpectName(constraintArray[n]);
+			let expectName = util.getBeFunctionName(constraintArray[n]);
 			if (expectName)
 			{
 				if (expectName in param)
@@ -755,10 +767,10 @@ module Expect.util
 			let additionalOptions: string[] = [];
 			
 			if (i >= sig.optionalPoint && (!sig.hasRest || i !== sig.parameters.length - 1))
-				additionalOptions.push(getExpectName(Expect.optional));
+				additionalOptions.push(getBeFunctionName(Be.optional));
 			
 			else if (sig.hasRest && i === sig.parameters.length - 1)
-				additionalOptions.push(getExpectName(Expect.rest));
+				additionalOptions.push(getBeFunctionName(Be.rest));
 			
 			stringifiedParams.push(stringifyParameter(sig.parameters[i], additionalOptions));
 		}
@@ -882,12 +894,12 @@ module Expect.util
 		return out;
 	}
 	
-	/** Returns the name of the expect function. *///
-	export function getExpectName(constraint: any)
+	/** Returns the name of the Be.* function. *///
+	export function getBeFunctionName(constraint: any)
 	{
 		return constraint instanceof Function && 
 			constraint.expectName && 
-			Expect[constraint.expectName] === constraint ? 
+			Be[constraint.expectName] === constraint ? 
 				constraint.expectName : "";
 	}
 	
@@ -901,19 +913,19 @@ module Expect.util
 	function initialize()
 	{
 		let passable = [
-			Expect.not,
-			Expect.notEmpty,
-			Expect.positive,
-			Expect.email,
-			Expect.enumeration,
-			Expect.optional,
-			Expect.rest,
-			Expect.any
+			Be.not,
+			Be.notEmpty,
+			Be.positive,
+			Be.email,
+			Be.enumeration,
+			Be.optional,
+			Be.rest,
+			Be.any
 		];
 		
-		for (let key in Expect)
-			if (passable.indexOf(Expect[key]) > -1)
-				Expect[key].expectName = key;
+		for (let key in Be)
+			if (passable.indexOf(Be[key]) > -1)
+				Be[key].expectName = key;
 	}
 	initialize();
 	
