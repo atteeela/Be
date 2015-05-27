@@ -17,7 +17,7 @@ Produces the following error because `bug` is not a string or number:
 ![Screenshot]
 (screenshot.png)
 
-Be() calls all return the value that was passed in, so you can wrap return values in `Be()` calls to defend yourself against undesirable errors:
+`Be()` calls all return the value that was passed in, so you can wrap return values in `Be()` calls to defend yourself against undesirable errors:
 
 ```javascript
 function stuff() { return Be.notNull(getSomethingThatMightBeNull()); }
@@ -138,7 +138,7 @@ Be.object(myObject, String, Number, Boolean); // Passes
 
 ##Returnable expectations
 
-The `Be()` function, as well as all the value checking functions always return the value that was passed, so you can wrap return values in Be() to quickly achieve perfect error reporting:
+The `Be()` function, as well as all the value checking functions always return the value that was passed, so you can wrap return values in `Be()` to quickly achieve perfect error reporting:
 
 ```javascript
 function getSomething()
@@ -166,7 +166,7 @@ array.slice(0, Be.positive(array.indexOf(value)));
 
 ##Checking arguments
 
-To validate the arguments to a function, pass the built-in `arguments` local to the Be() function, followed by an list of constraints that each argument must comply with. For example:
+To validate the arguments to a function, pass the built-in `arguments` local to the `Be()` function, followed by an list of constraints that each argument must comply with. For example:
 
 ```javascript
 // This function takes arguments in the order of a string, a number, a boolean, and an optional function.
