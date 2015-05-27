@@ -14,6 +14,7 @@ Be(bug, String, Number);
 
 Produces the following error because `bug` is not a string or number:
 
+![Screenshot]
 (screenshot.png)
 
 Be() calls all return the value that was passed in, so you can wrap return values in `Be()` calls to defend yourself against undesirable errors:
