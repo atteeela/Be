@@ -871,8 +871,10 @@ module Be.util
 		if (fn instanceof Function)
 		{
 			let fnText = fn.toString();
+			let extracted = /^function\s([a-z_$]{1,})/i.exec(fnText);
+			
 			return {
-				name: /^function\s([a-z_$]{1,})/i.exec(fnText)[1] || "",
+				name: extracted ? extracted[1] : "",
 				isBuiltIn: /^function\s[a-z_$]{1,}\(\)[\s]{0,}{[\s]{0,}\[\snative code\s\][\s]{0,}}/gi.test(fnText)
 			}
 		}
