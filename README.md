@@ -253,6 +253,8 @@ function handleState1or2()
 }
 ```
 
+`Be.broken()` can also takes a `value` parameter if there is an erroneous value that you want to report to your bug tracker.
+
 Use `Be.helpful("message")` when something goes wrong and you want to report an error message.
 
 Use `Be.notImplemented()` for functions that haven't been implemented yet.
