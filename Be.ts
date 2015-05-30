@@ -25,21 +25,21 @@ function Be(value: any, ...constraint: any[])
 					if (Be.util.report(`Argument ${i + 1} is undefined, and this function does not accept null, undefined, or NaN arguments.`))
 						debugger;
 					
-					return;
+					return null;
 				}
 				else if (a === null)
 				{
 					if (Be.util.report(`Argument ${i + 1} is null, and this function does not accept null, undefined, or NaN arguments.`))
 						debugger;
 					
-					return;
+					return null;
 				}
 				else if (a !== a)
 				{
 					if (Be.util.report(`Argument ${i + 1} is NaN, and this function does not accept null, undefined, or NaN arguments.`))
 						debugger;
 					
-					return;
+					return null;
 				}
 			}
 		}
@@ -51,7 +51,7 @@ function Be(value: any, ...constraint: any[])
 				if (Be.util.report(signature.parseError, signature))
 					debugger;
 				
-				return;
+				return null;
 			}
 			
 			/* Bad input checks */
@@ -61,7 +61,7 @@ function Be(value: any, ...constraint: any[])
 				if (Be.util.report(checkLengthMessage, args))
 					debugger;
 				
-				return;
+				return null;
 			}
 			
 			let checkArgumentsMessage = Be.util.checkArguments(signature, args);
@@ -70,7 +70,7 @@ function Be(value: any, ...constraint: any[])
 				if (Be.util.report(checkArgumentsMessage, args))
 					debugger;
 				
-				return;
+				return null;
 			}
 		}
 	}
@@ -123,6 +123,8 @@ module Be
 	{
 		if (util.report(message))
 			debugger;
+		
+		return null;
 	}
 	
 	/** Makes sure that the execution point will never reach the current location. *///
@@ -137,6 +139,8 @@ module Be
 		}
 		else if (util.report(message))
 			debugger;
+		
+		return null;
 	}
 	
 	/** Makes sure that the function is never called directly, and the only implementations exist in derived types. *///
@@ -144,6 +148,8 @@ module Be
 	{
 		if (util.report("This function must be overridden by an inheritor."))
 			debugger;
+		
+		return null;
 	}
 	
 	/** Makes sure that the property is read only. Intended for use in a setter function. *///
@@ -151,6 +157,8 @@ module Be
 	{
 		if (util.report("This property is read-only."))
 			debugger;
+		
+		return null;
 	}
 	
 	/** Makes sure that the current function is not implemented. *///
@@ -158,6 +166,8 @@ module Be
 	{
 		if (util.report("This function has not been implemented."))
 			debugger;
+		
+		return null;
 	}
 	
 	/** Makes sure that value is not null, undefined, NaN, false, 0, or ''. *///
@@ -185,24 +195,16 @@ module Be
 		{
 			if (util.report(`The value is null.`))
 				debugger;
-			
-			return value;
 		}
-		
-		if (value === void 0)
+		else if (value === void 0)
 		{
 			if (util.report(`The value is undefined.`))
 				debugger;
-			
-			return value;
 		}
-		
-		if (value !== value)
+		else if (value !== value)
 		{
 			if (util.report(`The value is NaN.`))
 				debugger;
-			
-			return value;
 		}
 		
 		return value;
@@ -218,20 +220,14 @@ module Be
 			if (!value || !/[\s]*/g.test(<any>value)) /* All whitespace */
 				if (util.report("The string is empty, or contains only whitespace."))
 					debugger;
-			
-			return value;
 		}
-		
-		if (value instanceof Array)
+		else if (value instanceof Array)
 		{
 			if (!(<any>value).length)
 				if (util.report("The array is empty."))
 					debugger;
-				
-			return value;
 		}
-		
-		if (value instanceof Object && !(value instanceof Function))
+		else if (value instanceof Object && !(value instanceof Function))
 		{
 			let hasKeys = false;
 			for (let key in value)
@@ -243,12 +239,12 @@ module Be
 			if (!hasKeys)
 				if (util.report("The object is empty."))
 					debugger;
-				
-			return value;
 		}
-		
-		if (util.report(`The value ${util.stringifyValue(value)} is not a non-empty string, array, or object.`, value))
-			debugger;
+		else
+		{
+			if (util.report(`The value ${util.stringifyValue(value)} is not a non-empty string, array, or object.`, value))
+				debugger;
+		}
 		
 		return value;
 	}
@@ -427,11 +423,8 @@ module Be
 		{
 			if (util.report(`The value ${util.stringifyValue(value)} is not an object.`, value))
 				debugger;
-			
-			return value;
 		}
-		
-		if (constraint.length)
+		else if (constraint.length)
 		{
 			for (let key in value)
 			{
@@ -456,7 +449,7 @@ module Be
 			if (util.report("Be.overloads requires an array of signatures.", args))
 				debugger;
 			
-			return;
+			return null;
 		}
 		
 		let passesOneOverload = false;
@@ -472,12 +465,12 @@ module Be
 				if (Be.util.report(signature.parseError, signature))
 					debugger;
 				
-				return;
+				return null;
 			}
 			
 			if (!util.checkLength(signature, args))
 				if (!util.checkArguments(signature, args))
-					return;
+					return null;
 		}
 		
 		let overloadsText = "";
@@ -487,6 +480,8 @@ module Be
 		
 		if (util.report(`The arguments do not comply with any of the ${overloads.length} overloads:${overloadsText}`, args))
 			debugger;
+		
+		return null;
 	}
 	
 	export var rest = () => {};
