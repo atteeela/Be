@@ -249,11 +249,10 @@ enum Enumeration
 	{
 		function overloadable(...args: any[])
 		{
-			Be.overloads(arguments,
-				[String, Number, RegExp],
-				[Number, Object],
-				[Number, [Object, null]],
-				[Function, Number, String, String]);
+			Be(arguments, String, Number, RegExp,
+				arguments, Number, Object,
+				arguments, Number, [Object, null],
+				arguments, Function, Number, String, String);
 		}
 		
 		pass(() => overloadable("", 0, /re/));
@@ -264,7 +263,7 @@ enum Enumeration
 		fail(() => overloadable(null, {}));
 		fail(() => overloadable("", 0, "", ""));
 		
-		fail(function() { Be["overloads"](arguments) });
+		fail(function() { overloadable(arguments) });
 	})();
 	
 	console.log("All tests have run.");

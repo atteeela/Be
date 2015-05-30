@@ -35,7 +35,7 @@ var Enumeration;
     })();
     // Semantic expectations tests
     (function () {
-        fail(function () { return Be.never(); });
+        fail(function () { return Be.broken(); });
         fail(function () { return Be.abstract(); });
         fail(function () { return Be.notImplemented(); });
         fail(function () { return Be.not(1); });
@@ -214,7 +214,7 @@ var Enumeration;
             for (var _i = 0; _i < arguments.length; _i++) {
                 args[_i - 0] = arguments[_i];
             }
-            Be.overloads(arguments, [String, Number, RegExp], [Number, Object], [Number, [Object, null]], [Function, Number, String, String]);
+            Be(arguments, String, Number, RegExp, arguments, Number, Object, arguments, Number, [Object, null], arguments, Function, Number, String, String);
         }
         pass(function () { return overloadable("", 0, /re/); });
         pass(function () { return overloadable(0, {}); });
@@ -222,7 +222,7 @@ var Enumeration;
         pass(function () { return overloadable(function () { }, 0, "", ""); });
         fail(function () { return overloadable(null, {}); });
         fail(function () { return overloadable("", 0, "", ""); });
-        fail(function () { Be["overloads"](arguments); });
+        fail(function () { overloadable(arguments); });
     })();
     console.log("All tests have run.");
 })();

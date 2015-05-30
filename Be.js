@@ -11,39 +11,70 @@ function Be(value) {
                 if (a === void 0) {
                     if (Be.util.report("Argument " + (i + 1) + " is undefined, and this function does not accept null, undefined, or NaN arguments."))
                         debugger;
-                    return;
+                    return null;
                 }
                 else if (a === null) {
                     if (Be.util.report("Argument " + (i + 1) + " is null, and this function does not accept null, undefined, or NaN arguments."))
                         debugger;
-                    return;
+                    return null;
                 }
                 else if (a !== a) {
                     if (Be.util.report("Argument " + (i + 1) + " is NaN, and this function does not accept null, undefined, or NaN arguments."))
                         debugger;
-                    return;
+                    return null;
                 }
             }
         }
         else {
-            var signature = Be.util.parseSignature(constraint);
-            if (signature.parseError) {
-                if (Be.util.report(signature.parseError, signature))
-                    debugger;
-                return;
+            var overloads = [[]];
+            for (var _a = 0; _a < constraint.length; _a++) {
+                var item_1 = constraint[_a];
+                Be.util.isArguments(item_1) ?
+                    overloads.push([]) :
+                    overloads[overloads.length - 1].push(item_1);
             }
-            /* Bad input checks */
-            var checkLengthMessage = Be.util.checkLength(signature, args);
-            if (checkLengthMessage) {
-                if (Be.util.report(checkLengthMessage, args))
-                    debugger;
-                return;
+            var signatures = [];
+            for (var _b = 0; _b < overloads.length; _b++) {
+                var ov = overloads[_b];
+                var signature = Be.util.parseSignature(ov);
+                if (signature.parseError) {
+                    if (Be.util.report(signature.parseError, signature))
+                        debugger;
+                    return null;
+                }
+                signatures.push(signature);
             }
-            var checkArgumentsMessage = Be.util.checkArguments(signature, args);
-            if (checkArgumentsMessage) {
-                if (Be.util.report(checkArgumentsMessage, args))
+            if (overloads.length === 1) {
+                var signature = signatures[0];
+                /* Bad input checks */
+                var checkLengthMessage = Be.util.checkLength(signature, args);
+                if (checkLengthMessage) {
+                    if (Be.util.report(checkLengthMessage, args))
+                        debugger;
+                    return null;
+                }
+                var checkArgumentsMessage = Be.util.checkArguments(signature, args);
+                if (checkArgumentsMessage) {
+                    if (Be.util.report(checkArgumentsMessage, args))
+                        debugger;
+                    return null;
+                }
+            }
+            else {
+                for (var _c = 0; _c < signatures.length; _c++) {
+                    var signature = signatures[_c];
+                    if (!Be.util.checkLength(signature, args))
+                        if (!Be.util.checkArguments(signature, args))
+                            return null;
+                }
+                var signaturesText = "";
+                for (var _d = 0; _d < signatures.length; _d++) {
+                    var sig = signatures[_d];
+                    signaturesText += "\r\n\t" + Be.util.stringifySignature(sig);
+                }
+                if (Be.util.report("The arguments do not comply with any of the " + signatures.length + " overloads:" + signaturesText, args))
                     debugger;
-                return;
+                return null;
             }
         }
     }
@@ -78,28 +109,44 @@ var Be;
     })();
     Be.BeError = BeError;
     BeError.prototype = new Error;
-    /** Makes sure that the execution point will never reach the current location. */ //
-    function never(message) {
-        if (Be.util.report(message || "An invalid location has been reached in the program."))
+    /** Fails with the specified error message. */ //
+    function helpful(message) {
+        if (Be.util.report(message))
             debugger;
+        return null;
     }
-    Be.never = never;
+    Be.helpful = helpful;
+    /** Makes sure that the execution point will never reach the current location. */ //
+    function broken(value) {
+        var message = "An invalid location has been reached in the program.";
+        if (arguments.length === 1) {
+            if (Be.util.report(message, value))
+                debugger;
+        }
+        else if (Be.util.report(message))
+            debugger;
+        return null;
+    }
+    Be.broken = broken;
     /** Makes sure that the function is never called directly, and the only implementations exist in derived types. */ //
     function abstract() {
         if (Be.util.report("This function must be overridden by an inheritor."))
             debugger;
+        return null;
     }
     Be.abstract = abstract;
     /** Makes sure that the property is read only. Intended for use in a setter function. */ //
     function readOnly() {
         if (Be.util.report("This property is read-only."))
             debugger;
+        return null;
     }
     Be.readOnly = readOnly;
     /** Makes sure that the current function is not implemented. */ //
     function notImplemented() {
         if (Be.util.report("This function has not been implemented."))
             debugger;
+        return null;
     }
     Be.notImplemented = notImplemented;
     /** Makes sure that value is not null, undefined, NaN, false, 0, or ''. */ //
@@ -121,17 +168,14 @@ var Be;
         if (value === null) {
             if (Be.util.report("The value is null."))
                 debugger;
-            return value;
         }
-        if (value === void 0) {
+        else if (value === void 0) {
             if (Be.util.report("The value is undefined."))
                 debugger;
-            return value;
         }
-        if (value !== value) {
+        else if (value !== value) {
             if (Be.util.report("The value is NaN."))
                 debugger;
-            return value;
         }
         return value;
     }
@@ -144,15 +188,13 @@ var Be;
             if (!value || !/[\s]*/g.test(value))
                 if (Be.util.report("The string is empty, or contains only whitespace."))
                     debugger;
-            return value;
         }
-        if (value instanceof Array) {
+        else if (value instanceof Array) {
             if (!value.length)
                 if (Be.util.report("The array is empty."))
                     debugger;
-            return value;
         }
-        if (value instanceof Object && !(value instanceof Function)) {
+        else if (value instanceof Object && !(value instanceof Function)) {
             var hasKeys = false;
             for (var key in value) {
                 hasKeys = true;
@@ -161,10 +203,11 @@ var Be;
             if (!hasKeys)
                 if (Be.util.report("The object is empty."))
                     debugger;
-            return value;
         }
-        if (Be.util.report("The value " + Be.util.stringifyValue(value) + " is not a non-empty string, array, or object.", value))
-            debugger;
+        else {
+            if (Be.util.report("The value " + Be.util.stringifyValue(value) + " is not a non-empty string, array, or object.", value))
+                debugger;
+        }
         return value;
     }
     Be.notEmpty = notEmpty;
@@ -308,9 +351,8 @@ var Be;
         if (!(value instanceof Object)) {
             if (Be.util.report("The value " + Be.util.stringifyValue(value) + " is not an object.", value))
                 debugger;
-            return value;
         }
-        if (constraint.length) {
+        else if (constraint.length) {
             for (var key in value) {
                 if (!Be.util.checkConstraint(value[key], constraint)) {
                     if (Be.util.report(("The ." + key + " property in the object is " + Be.util.stringifyValue(value[key]) + ", which does not comply with the constraint: ") + Be.util.stringifyParameter(constraint), value))
@@ -322,40 +364,6 @@ var Be;
         return value;
     }
     Be.object = object;
-    /** Makes sure that the argument set to comply with one of the specified signatures (overloads). */ //
-    function overloads(args) {
-        var overloads = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            overloads[_i - 1] = arguments[_i];
-        }
-        if (!overloads || !overloads.length) {
-            if (Be.util.report("Be.overloads requires an array of signatures.", args))
-                debugger;
-            return;
-        }
-        var passesOneOverload = false;
-        var signatures = [];
-        for (var i = -1; ++i < overloads.length;) {
-            var signature = Be.util.parseSignature(overloads[i]);
-            signatures.push(signature);
-            if (signature.parseError) {
-                if (Be.util.report(signature.parseError, signature))
-                    debugger;
-                return;
-            }
-            if (!Be.util.checkLength(signature, args))
-                if (!Be.util.checkArguments(signature, args))
-                    return;
-        }
-        var overloadsText = "";
-        for (var _a = 0; _a < signatures.length; _a++) {
-            var sig = signatures[_a];
-            overloadsText += "\r\n\t" + Be.util.stringifySignature(sig);
-        }
-        if (Be.util.report("The arguments do not comply with any of the " + overloads.length + " overloads:" + overloadsText, args))
-            debugger;
-    }
-    Be.overloads = overloads;
     Be.rest = function () { };
     Be.any = function () { };
     Be.optional = function () { };
@@ -635,8 +643,9 @@ var Be;
         function parseFunction(fn) {
             if (fn instanceof Function) {
                 var fnText = fn.toString();
+                var extracted = /^function\s([a-z_$]{1,})/i.exec(fnText);
                 return {
-                    name: /^function\s([a-z_$]{1,})/i.exec(fnText)[1] || "",
+                    name: extracted ? extracted[1] : "",
                     isBuiltIn: /^function\s[a-z_$]{1,}\(\)[\s]{0,}{[\s]{0,}\[\snative code\s\][\s]{0,}}/gi.test(fnText)
                 };
             }

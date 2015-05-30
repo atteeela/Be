@@ -25,52 +25,88 @@ function Be(value: any, ...constraint: any[])
 					if (Be.util.report(`Argument ${i + 1} is undefined, and this function does not accept null, undefined, or NaN arguments.`))
 						debugger;
 					
-					return null;
+					return value;
 				}
 				else if (a === null)
 				{
 					if (Be.util.report(`Argument ${i + 1} is null, and this function does not accept null, undefined, or NaN arguments.`))
 						debugger;
 					
-					return null;
+					return value;
 				}
 				else if (a !== a)
 				{
 					if (Be.util.report(`Argument ${i + 1} is NaN, and this function does not accept null, undefined, or NaN arguments.`))
 						debugger;
 					
-					return null;
+					return value;
 				}
 			}
 		}
 		else
 		{
-			let signature = Be.util.parseSignature(constraint);
-			if (signature.parseError)
+			let overloads = [[]];
+			
+			for (let item of constraint)
+				Be.util.isArguments(item) ?
+					overloads.push([]) :
+					overloads[overloads.length - 1].push(item);
+			
+			let signatures: Be.util.Signature[] = [];
+			
+			for (let ov of overloads)
 			{
-				if (Be.util.report(signature.parseError, signature))
-					debugger;
+				let signature = Be.util.parseSignature(ov);
+				if (signature.parseError)
+				{
+					if (Be.util.report(signature.parseError, signature))
+						debugger;
+					
+					return value;
+				}
 				
-				return null;
+				signatures.push(signature);
 			}
 			
-			/* Bad input checks */
-			let checkLengthMessage = Be.util.checkLength(signature, args);
-			if (checkLengthMessage)
+			if (overloads.length === 1)
 			{
-				if (Be.util.report(checkLengthMessage, args))
-					debugger;
+				let signature = signatures[0];
 				
-				return null;
+				/* Bad input checks */
+				let checkLengthMessage = Be.util.checkLength(signature, args);
+				if (checkLengthMessage)
+				{
+					if (Be.util.report(checkLengthMessage, args))
+						debugger;
+					
+					return value;
+				}
+				
+				let checkArgumentsMessage = Be.util.checkArguments(signature, args);
+				if (checkArgumentsMessage)
+				{
+					if (Be.util.report(checkArgumentsMessage, args))
+						debugger;
+					
+					return value;
+				}
 			}
-			
-			let checkArgumentsMessage = Be.util.checkArguments(signature, args);
-			if (checkArgumentsMessage)
+			else
 			{
-				if (Be.util.report(checkArgumentsMessage, args))
+				for (let signature of signatures)
+					if (!Be.util.checkLength(signature, args))
+						if (!Be.util.checkArguments(signature, args))
+							return value;
+				
+				let signaturesText = "";
+				
+				for (let sig of signatures)
+					signaturesText += "\r\n\t" + Be.util.stringifySignature(sig);
+				
+				if (Be.util.report(`The arguments do not comply with any of the ${signatures.length} overloads:${signaturesText}`, args))
 					debugger;
 				
-				return null;
+				return value;
 			}
 		}
 	}
@@ -439,49 +475,6 @@ module Be
 		}
 		
 		return value;
-	}
-	
-	/** Makes sure that the argument set to comply with one of the specified signatures (overloads). *///
-	export function overloads(args: IArguments, ...overloads: any[]): void
-	{
-		if (!overloads || !overloads.length)
-		{
-			if (util.report("Be.overloads requires an array of signatures.", args))
-				debugger;
-			
-			return null;
-		}
-		
-		let passesOneOverload = false;
-		let signatures: util.Signature[] = [];
-		
-		for (let i = -1; ++i < overloads.length;)
-		{
-			let signature = util.parseSignature(overloads[i]);
-			signatures.push(signature);
-			
-			if (signature.parseError)
-			{
-				if (Be.util.report(signature.parseError, signature))
-					debugger;
-				
-				return null;
-			}
-			
-			if (!util.checkLength(signature, args))
-				if (!util.checkArguments(signature, args))
-					return null;
-		}
-		
-		let overloadsText = "";
-		
-		for (let sig of signatures)
-			overloadsText += "\r\n\t" + util.stringifySignature(sig);
-		
-		if (util.report(`The arguments do not comply with any of the ${overloads.length} overloads:${overloadsText}`, args))
-			debugger;
-		
-		return null;
 	}
 	
 	export var rest = () => {};

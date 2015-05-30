@@ -21,7 +21,7 @@ Produces the following error because `bug` is not a string or number:
 ![Screenshot]
 (screenshot.png)
 
-`Be()` calls all return the value that was passed in, so you can wrap return values in `Be()` calls to defend yourself against undesirable errors:
+All calls to `Be()` return the value that was passed in, so you can wrap return values in `Be()` calls to defend yourself against undesirable errors:
 
 ```javascript
 function stuff() { return Be.notNull(getSomethingThatMightBeNull()); }
@@ -212,7 +212,9 @@ function withOptionals(num1, num2Opt, num3Opt)
 ```
 Sometimes your parameter structure is a bit too complicated to fit into the *required stuff* -> *optional stuff* -> *rest* structure. For these situations, you might need to define multiple overloads. 
 
-For example, in the Back.io client library, there are 6 different ways to call the `User.login()` method. Below is the `Be()` I used to make sure helpful errors are displayed. (The example is TypeScript, because that's what most people who care about this stuff will probably be using). 
+You can specify another overload by passing the `arguments` local again in the rest parameters, followed by a new set of constraints.
+
+For example, in the Back.io client library, there are 6 different overloads on the `User.login()` method. Below is the `Be()` I used to make sure helpful errors are displayed. (The example is TypeScript, because that's what most people who care about this stuff will probably be using). 
 
 ```javascript
 
@@ -224,18 +226,14 @@ static login<T>(days: number, doneFn?: (user: T) => void);
 static login<T>(doneFn?: (user: T) => void);
 static login(a: any, b?: any, c?: any, d?: any)
 {
-	Be.overloads(arguments,
-		[String, String, [Function, Be.optional]],
-		[String, String, Number, [Function, Be.optional]],
-		[UserModel, [Function, Be.optional]],
-		[UserModel, Number, [Function, Be.optional]],
-		[Number, [Function, Be.optional]],
-		[Function, Be.optional]]);
+	Be(arguments, String, String, [Function, Be.optional],
+		arguments, String, String, Number, [Function, Be.optional],
+		arguments, UserModel, [Function, Be.optional],
+		arguments, UserModel, Number, [Function, Be.optional],
+		arguments, Number, [Function, Be.optional],
+		arguments, Function, Be.optional]);
 }
 ```
-
-In short, `Be.overloads(arguments)` works like `Be(arguments)`, except that it takes an array of constraints, instead of just a single list of constraints.
-
 
 
 ##Failing semantically
